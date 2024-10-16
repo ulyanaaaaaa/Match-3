@@ -9,14 +9,15 @@ using UnityEngine.SceneManagement;
 
 public class GameOverManager : MonoBehaviour
 {
-    public GameObject HighScoreAlert;
-    public TextMeshProUGUI scoreText;
-    public TextMeshProUGUI highScoreText;
+    [SerializeField] private GameObject _highScoreAlert;
+    [SerializeField] private TextMeshProUGUI _scoreText;
+    [SerializeField] private TextMeshProUGUI _highScoreText;
 
     private void OnEnable()
     {
         int score = PlayerPrefs.GetInt("score");
         int highScore;
+        
         if (PlayerPrefs.HasKey("highScore"))
         {
             highScore = PlayerPrefs.GetInt("highScore");
@@ -28,15 +29,15 @@ public class GameOverManager : MonoBehaviour
         if (score > highScore)
         {
             PlayerPrefs.SetInt("highScore", score);
-            highScoreText.text = score.ToString();
-            HighScoreAlert.SetActive(true);
+            _highScoreText.text = score.ToString();
+            _highScoreAlert.SetActive(true);
         }
         else
         {
-            HighScoreAlert.SetActive(false);
-            highScoreText.text = highScore.ToString();
+            _highScoreAlert.SetActive(false);
+            _highScoreText.text = highScore.ToString();
         }
-        scoreText.text = score.ToString();
+        _scoreText.text = score.ToString();
     }
 
     public void RestartLevel()

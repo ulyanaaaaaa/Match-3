@@ -1,50 +1,48 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
-    private static Tile selected;
-    private SpriteRenderer Renderer;
-
     public Vector2Int Position;
+    private static Tile _selected;
+    private SpriteRenderer _spriteRenderer;
 
     private void Start()
     {
-        Renderer = GetComponent<SpriteRenderer>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
     }
 
-    public void Select()
+    private void Select()
     {
-        Renderer.color = Color.grey;
+        _spriteRenderer.color = Color.grey;
     }
 
-    public void Unselect()
+    private void Unselect()
     {
-        Renderer.color = Color.white;
+        _spriteRenderer.color = Color.white;
     }
 
     private void OnMouseDown()
     {
-        if (selected != null)
+        if (_selected != null)
         {
-            if (selected == this)
+            if (_selected == this)
                 return;
-            selected.Unselect();
-            if (Vector2Int.Distance(selected.Position, Position) == 1)
+            _selected.Unselect();
+            
+            if (Vector2Int.Distance(_selected.Position, Position) == 1)
             {
-                GridManager.Instance.SwapTiles(Position, selected.Position);
-                selected = null;
+                GridManager.Instance.SwapTiles(Position, _selected.Position);
+                _selected = null;
             }
             else
             {
-                selected = this;
+                _selected = this;
                 Select();
             }
         }
         else
         {
-            selected = this;
+            _selected = this;
             Select();
         }
     }

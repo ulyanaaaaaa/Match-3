@@ -1,19 +1,22 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
-    public List<Sprite> Sprites = new List<Sprite>();
-    public GameObject TilePrefab;
-    public int GridDimension = 8;
-    public float Distance = 1.0f;
-    private GameObject[,] Grid;
-
-    public int StartingMoves = 50;
+    public static GridManager Instance { get; private set; }
+    [field:SerializeField] private List<Sprite> _sprites = new List<Sprite>();
+    [SerializeField] private GameObject _tilePrefab;
+    [SerializeField] private int _gridDimension = 8;
+    [SerializeField] private float _distance = 1.0f;
+    [SerializeField] private GameObject GameOverMenu;
+    [SerializeField] private TextMeshProUGUI MovesText;
+    [SerializeField] private TextMeshProUGUI ScoreText;
+    [SerializeField] private int _startingMoves = 50;
+    private GameObject[,] _grid;
     private int _numMoves;
-    public int NumMoves
+    private int _score;
+    private int NumMoves
     {
         get
         {
@@ -26,9 +29,8 @@ public class GridManager : MonoBehaviour
             MovesText.text = _numMoves.ToString();
         }
     }
-
-    private int _score;
-    public int Score
+    
+    private int Score
     {
         get
         {
@@ -42,38 +44,32 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    public GameObject GameOverMenu;
-    public TextMeshProUGUI MovesText;
-    public TextMeshProUGUI ScoreText;
-
-    public static GridManager Instance { get; private set; }
-
-    void Awake()
+    private void Awake()
     {
         Instance = this;
         Score = 0;
-        NumMoves = StartingMoves;
+        NumMoves = _startingMoves;
     }
     
-    void Start()
+    private void Start()
     {
-        Grid = new GameObject[GridDimension, GridDimension];
+        _grid = new GameObject[_gridDimension, _gridDimension];
         GameOverMenu.SetActive(false);
         InitGrid();
     }
 
-    void InitGrid()
+    private void InitGrid()
     {
-        Vector3 positionOffset = transform.position - new Vector3(GridDimension * Distance / 2.0f, GridDimension * Distance / 2.0f, 0);
+        Vector3 positionOffset = transform.position - new Vector3(_gridDimension * _distance / 2.0f, _gridDimension * _distance / 2.0f, 0);
 
-        for (int row = 0; row < GridDimension; row++)
-            for (int column = 0; column < GridDimension; column++)
+        for (int row = 0; row < _gridDimension; row++)
+        {
+            for (int column = 0; column < _gridDimension; column++)
             {
-                GameObject newTile = Instantiate(TilePrefab);
+                GameObject newTile = Instantiate(_tilePrefab);
 
-                List<Sprite> possibleSprites = new List<Sprite>(Sprites);
+                List<Sprite> possibleSprites = new List<Sprite>(_sprites);
 
-                //Choose what sprite to use for this cell
                 Sprite left1 = GetSpriteAt(column - 1, row);
                 Sprite left2 = GetSpriteAt(column - 2, row);
                 if (left2 != null && left1 == left2)
@@ -95,38 +91,39 @@ public class GridManager : MonoBehaviour
                 tile.Position = new Vector2Int(column, row);
 
                 newTile.transform.parent = transform;
-                newTile.transform.position = new Vector3(column * Distance, row * Distance, 0) + positionOffset;
-                
-                Grid[column, row] = newTile;
+                newTile.transform.position = new Vector3(column * _distance, row * _distance, 0) + positionOffset;
+
+                _grid[column, row] = newTile;
             }
+        }
     }
 
-    Sprite GetSpriteAt(int column, int row)
+    private Sprite GetSpriteAt(int column, int row)
     {
-        if (column < 0 || column >= GridDimension
-         || row < 0 || row >= GridDimension)
+        if (column < 0 || column >= _gridDimension
+         || row < 0 || row >= _gridDimension)
             return null;
-        GameObject tile = Grid[column, row];
+        GameObject tile = _grid[column, row];
         SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
         return renderer.sprite;
     }
 
-    SpriteRenderer GetSpriteRendererAt(int column, int row)
+    private SpriteRenderer GetSpriteRendererAt(int column, int row)
     {
-        if (column < 0 || column >= GridDimension
-         || row < 0 || row >= GridDimension)
+        if (column < 0 || column >= _gridDimension
+         || row < 0 || row >= _gridDimension)
             return null;
-        GameObject tile = Grid[column, row];
+        GameObject tile = _grid[column, row];
         SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
         return renderer;
     }
 
     public void SwapTiles(Vector2Int tile1Position, Vector2Int tile2Position)
     {
-        GameObject tile1 = Grid[tile1Position.x, tile1Position.y];
+        GameObject tile1 = _grid[tile1Position.x, tile1Position.y];
         SpriteRenderer renderer1 = tile1.GetComponent<SpriteRenderer>();
         
-        GameObject tile2 = Grid[tile2Position.x, tile2Position.y];
+        GameObject tile2 = _grid[tile2Position.x, tile2Position.y];
         SpriteRenderer renderer2 = tile2.GetComponent<SpriteRenderer>();
 
         Sprite temp = renderer1.sprite;
@@ -155,12 +152,12 @@ public class GridManager : MonoBehaviour
         }
     }
 
-    bool CheckMatches()
+    private bool CheckMatches()
     {
         HashSet<SpriteRenderer> matchedTiles = new HashSet<SpriteRenderer>();
-        for (int row = 0; row < GridDimension; row++)
+        for (int row = 0; row < _gridDimension; row++)
         {
-            for (int column = 0; column < GridDimension; column++)
+            for (int column = 0; column < _gridDimension; column++)
             {
                 SpriteRenderer current = GetSpriteRendererAt(column, row);
 
@@ -188,10 +185,10 @@ public class GridManager : MonoBehaviour
         return matchedTiles.Count > 0;
     }
 
-    List<SpriteRenderer> FindColumnMatchForTile(int col, int row, Sprite sprite)
+    private List<SpriteRenderer> FindColumnMatchForTile(int col, int row, Sprite sprite)
     {
         List<SpriteRenderer> result = new List<SpriteRenderer>();
-        for (int i = col + 1; i < GridDimension; i++)
+        for (int i = col + 1; i < _gridDimension; i++)
         {
             SpriteRenderer nextColumn = GetSpriteRendererAt(i, row);
             if (nextColumn.sprite != sprite)
@@ -203,10 +200,10 @@ public class GridManager : MonoBehaviour
         return result;
     }
 
-    List<SpriteRenderer> FindRowMatchForTile(int col, int row, Sprite sprite)
+    private List<SpriteRenderer> FindRowMatchForTile(int col, int row, Sprite sprite)
     {
         List<SpriteRenderer> result = new List<SpriteRenderer>();
-        for (int i = row + 1; i < GridDimension; i++)
+        for (int i = row + 1; i < _gridDimension; i++)
         {
             SpriteRenderer nextRow = GetSpriteRendererAt(col, i);
             if (nextRow.sprite != sprite)
@@ -218,27 +215,30 @@ public class GridManager : MonoBehaviour
         return result;
     }
 
-    void FillHoles()
+    private void FillHoles()
     {
-        for (int column = 0; column < GridDimension; column++)
-            for (int row = 0; row < GridDimension; row++)
+        for (int column = 0; column < _gridDimension; column++)
+        {
+            for (int row = 0; row < _gridDimension; row++)
             {
                 while (GetSpriteRendererAt(column, row).sprite == null)
                 {
                     SpriteRenderer current = GetSpriteRendererAt(column, row);
                     SpriteRenderer next = current;
-                    for (int filler = row; filler < GridDimension - 1; filler++)
+                    for (int filler = row; filler < _gridDimension - 1; filler++)
                     {
                         next = GetSpriteRendererAt(column, filler + 1);
                         current.sprite = next.sprite;
                         current = next;
                     }
-                    next.sprite = Sprites[Random.Range(0, Sprites.Count)];
+
+                    next.sprite = _sprites[Random.Range(0, _sprites.Count)];
                 }
             }
+        }
     }
 
-    void GameOver()
+    private void GameOver()
     {
         Debug.Log("GAME OVER");
         PlayerPrefs.SetInt("score", Score);
